@@ -2,13 +2,22 @@
 
 A 2048 plugin for [KOReader](https://github.com/koreader/koreader).
 
+
+## Screenshot
+
+*(Screenshot to be added.)*
+
+## Rules
+
+Slide all tiles in one direction. When two tiles with the same number collide they merge and double in value. A new tile (2 or 4) appears after each move. Reach **2048** to win — but keep going for a higher score! The game ends when no more moves are possible.
+
 ## Concept
 
 Slide numbered tiles on a 4×4 grid. When two tiles with the same number collide
 they merge into one tile with their sum. Reach the 2048 tile to win — or keep
 going for a higher score!
 
-## Planned Features
+## Features
 
 - **Classic 4×4 grid** with optional 5×5 and 6×6 variants
 - **Swipe or button controls** — swipe in any direction or use on-screen arrow buttons
@@ -27,6 +36,7 @@ going for a higher score!
 | Undo last move | Tap **Undo** |
 | New game | Tap **New game** |
 | Change grid size | Tap **Grid** |
+| Show rules | Tap **Rules** |
 
 ## Why e-ink friendly?
 
