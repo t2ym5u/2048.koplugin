@@ -7,6 +7,7 @@ local function lrequire(name)
     return package.loaded[key]
 end
 
+local Button          = require("ui/widget/button")
 local ButtonTable     = require("ui/widget/buttontable")
 local Device          = require("device")
 local FrameContainer  = require("ui/widget/container/framecontainer")
@@ -16,7 +17,7 @@ local Size            = require("ui/size")
 local UIManager       = require("ui/uimanager")
 local VerticalGroup   = require("ui/widget/verticalgroup")
 local VerticalSpan    = require("ui/widget/verticalspan")
-local _               = require("gettext")
+local _               = require("i18n")
 local T               = require("ffi/util").template
 
 local ScreenBase         = require("screen_base")
@@ -110,21 +111,29 @@ function Game2048Screen:buildLayout()
         self.board_widget,
     }
 
-    -- Arrow buttons (alternative to swipe) — use full portrait width for spacing
-    local arrow_width = is_landscape
-        and math.max(math.floor(sw * 0.45), 160)
-        or  math.floor(sw * 0.95)
-    local arrow_buttons = ButtonTable:new{
-        shrink_unneeded_width = true,
-        width   = arrow_width,
-        buttons = {
-            {
-                { text = "\xE2\x86\x90", callback = function() self:onSlide("left")  end },
-                { text = "\xE2\x86\x91", callback = function() self:onSlide("up")    end },
-                { text = "\xE2\x86\x93", callback = function() self:onSlide("down")  end },
-                { text = "\xE2\x86\x92", callback = function() self:onSlide("right") end },
-            },
-        },
+    -- Arrow buttons (alternative to swipe)
+    local arrow_btn_size = DeviceScreen:scaleBySize(64)
+    local arrow_gap      = DeviceScreen:scaleBySize(8)
+    local function makeArrowBtn(text, dir)
+        return Button:new{
+            text       = text,
+            width      = arrow_btn_size,
+            height     = arrow_btn_size,
+            font_size  = 32,
+            bordersize = Size.border.default,
+            radius     = Size.radius.button,
+            callback   = function() self:onSlide(dir) end,
+        }
+    end
+    local arrow_buttons = HorizontalGroup:new{
+        align = "center",
+        makeArrowBtn("\xE2\x86\x91", "up"),
+        HorizontalSpan:new{ width = arrow_gap },
+        makeArrowBtn("\xE2\x86\x93", "down"),
+        HorizontalSpan:new{ width = arrow_gap },
+        makeArrowBtn("\xE2\x86\x90", "left"),
+        HorizontalSpan:new{ width = arrow_gap },
+        makeArrowBtn("\xE2\x86\x92", "right"),
     }
 
     if is_landscape then
@@ -143,18 +152,13 @@ function Game2048Screen:buildLayout()
             right_panel,
         }
     else
-        self.layout = VerticalGroup:new{
+        local content = VerticalGroup:new{
             align = "center",
-            VerticalSpan:new{ width = Size.span.vertical_large },
-            top_buttons,
-            VerticalSpan:new{ width = Size.span.vertical_large },
             board_frame,
             VerticalSpan:new{ width = Size.span.vertical_large },
             self.status_text,
-            VerticalSpan:new{ width = Size.span.vertical_large },
-            arrow_buttons,
-            VerticalSpan:new{ width = Size.span.vertical_large },
         }
+        self:buildPortraitLayout(top_buttons, content, arrow_buttons)
     end
     self[1] = self.layout
     self:updateStatus()
