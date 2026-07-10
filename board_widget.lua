@@ -81,7 +81,7 @@ function Game2048BoardWidget:init()
     self.paint_rect = nil
 
     self.ges_events = {
-        BoardSwipe = { GestureRange:new{ ges = "swipe", range = self.dimen } },
+        BoardSwipe = { GestureRange:new{ ges = "swipe", range = function() return self.paint_rect end } },
     }
 end
 
