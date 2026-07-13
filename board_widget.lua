@@ -85,7 +85,7 @@ function Game2048BoardWidget:init()
     }
 end
 
-function Game2048BoardWidget:onBoardSwipe(ges)
+function Game2048BoardWidget:onBoardSwipe(_, ges)
     if self.onSwipe then
         local dir = ges.direction  -- "east","west","north","south"
         local map = { east="right", west="left", north="up", south="down" }
