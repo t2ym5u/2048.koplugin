@@ -81,23 +81,15 @@ function Game2048Screen:buildLayout()
         and math.max(math.floor(sw * 0.35), 100)
         or  math.floor(sw * 0.9)
 
-    -- Top bar
-    local top_buttons = ButtonTable:new{
-        shrink_unneeded_width = true,
-        width   = button_width,
-        buttons = {{
-            { text = _("New"),  callback = function() self:onNewGame() end },
-            { id = "size_btn",  text = self:getSizeButtonText(),
-              callback = function() self:onCycleSize() end },
-            { id = "undo_btn",  text = _("Undo"),
-              callback = function() self:onUndo() end },
+    -- Title bar with Options menu
+    local title_bar = self:buildTitleBar(_("2048"), function()
+        return {
+            { text = _("New game"),            callback = function() self:onNewGame() end },
+            { text = self:getSizeButtonText(), callback = function() self:onCycleSize() end },
+            { text = _("Undo"),                callback = function() self:onUndo() end },
             self:makeRulesButtonConfig(GAME_RULES_EN, GAME_RULES_FR),
-            self:makeCloseButtonConfig(),
-        }},
-    }
-    self.size_btn = top_buttons:getButtonById("size_btn")
-    self.undo_btn = top_buttons:getButtonById("undo_btn")
-    self:_updateUndoButton()
+        }
+    end)
 
     -- Board widget
     self.board_widget = Game2048BoardWidget:new{
@@ -139,18 +131,17 @@ function Game2048Screen:buildLayout()
     if is_landscape then
         local right_panel = VerticalGroup:new{
             align = "center",
-            top_buttons,
-            VerticalSpan:new{ width = Size.span.vertical_large },
             self.status_text,
             VerticalSpan:new{ width = Size.span.vertical_large },
             arrow_buttons,
         }
-        self.layout = HorizontalGroup:new{
+        local content = HorizontalGroup:new{
             align  = "center",
             board_frame,
             HorizontalSpan:new{ width = Size.span.horizontal_default },
             right_panel,
         }
+        self:buildLandscapeLayout(title_bar, content)
     else
         local content = VerticalGroup:new{
             align = "center",
@@ -158,9 +149,8 @@ function Game2048Screen:buildLayout()
             VerticalSpan:new{ width = Size.span.vertical_large },
             self.status_text,
         }
-        self:buildPortraitLayout(top_buttons, content, arrow_buttons)
+        self:buildPortraitLayout(title_bar, content, arrow_buttons)
     end
-    self[1] = self.layout
     self:updateStatus()
 end
 
