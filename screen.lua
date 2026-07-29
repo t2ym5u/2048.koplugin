@@ -9,8 +9,10 @@ end
 
 local Button          = require("ui/widget/button")
 local ButtonTable     = require("ui/widget/buttontable")
+local CenterContainer = require("ui/widget/container/centercontainer")
 local Device          = require("device")
 local FrameContainer  = require("ui/widget/container/framecontainer")
+local Geom            = require("ui/geometry")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan  = require("ui/widget/horizontalspan")
 local Size            = require("ui/size")
@@ -103,15 +105,26 @@ function Game2048Screen:buildLayout()
         self.board_widget,
     }
 
+    -- Status text (Score/Best/Max) is centred within a fixed-width container
+    -- matching the board. A plain VerticalGroup/HorizontalGroup caches its
+    -- children's size the first time it's measured (here, before the real
+    -- text is set) and never re-centres them afterwards, so wrapping in a
+    -- CenterContainer with a fixed dimen is what keeps it centred as the
+    -- score text keeps changing width.
+    local status_container = CenterContainer:new{
+        dimen = Geom:new{ w = board_frame:getSize().w, h = self.status_text:getSize().h },
+        self.status_text,
+    }
+
     -- Arrow buttons (alternative to swipe)
-    local arrow_btn_size = DeviceScreen:scaleBySize(64)
+    local arrow_btn_size = DeviceScreen:scaleBySize(52)
     local arrow_gap      = DeviceScreen:scaleBySize(8)
     local function makeArrowBtn(text, dir)
         return Button:new{
             text       = text,
             width      = arrow_btn_size,
             height     = arrow_btn_size,
-            font_size  = 32,
+            font_size  = 26,
             bordersize = Size.border.default,
             radius     = Size.radius.button,
             callback   = function() self:onSlide(dir) end,
@@ -131,7 +144,7 @@ function Game2048Screen:buildLayout()
     if is_landscape then
         local right_panel = VerticalGroup:new{
             align = "center",
-            self.status_text,
+            status_container,
             VerticalSpan:new{ width = Size.span.vertical_large },
             arrow_buttons,
         }
@@ -143,13 +156,19 @@ function Game2048Screen:buildLayout()
         }
         self:buildLandscapeLayout(title_bar, content)
     else
+        -- Keep the board, score and arrows together as a single block so the
+        -- whole group floats centred in the available space, instead of
+        -- pinning the arrows to the very bottom of the screen with a large
+        -- gap below the score.
         local content = VerticalGroup:new{
             align = "center",
             board_frame,
             VerticalSpan:new{ width = Size.span.vertical_large },
-            self.status_text,
+            status_container,
+            VerticalSpan:new{ width = Size.span.vertical_large },
+            arrow_buttons,
         }
-        self:buildPortraitLayout(title_bar, content, arrow_buttons)
+        self:buildPortraitLayout(title_bar, content, nil)
     end
     self:updateStatus()
 end
