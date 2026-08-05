@@ -5,7 +5,7 @@ A 2048 plugin for [KOReader](https://github.com/koreader/koreader).
 
 ## Screenshot
 
-*(Screenshot to be added.)*
+![Screenshot](images/2048.png)
 
 ## Rules
 
