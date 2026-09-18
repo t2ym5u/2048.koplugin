@@ -19,15 +19,16 @@ local function slideLeft(row, n)
     local score  = 0
     local i = 1
     while i <= #compacted do
+        local inc = 1
+        local val = compacted[i]
+
         if i < #compacted and compacted[i] == compacted[i + 1] then
-            local val = compacted[i] * 2
-            merged[#merged + 1] = val
+            inc = 2
+            val = compacted[i] * 2
             score = score + val
-            i = i + 2
-        else
-            merged[#merged + 1] = compacted[i]
-            i = i + 1
         end
+        merged[#merged + 1] = val
+        i = i + inc
     end
     -- Pad with zeros to length n
     while #merged < n do merged[#merged + 1] = 0 end
