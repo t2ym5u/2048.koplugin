@@ -6,6 +6,15 @@ Reconstructed from this repository's git history: each release lists the
 feature and fix commits it carried. Version bumps, screenshot additions
 and CI syncs are left out.
 
+## [1.1.16] - 2026-10-07
+
+### Fixed
+- The Tools menu entry is translated again. `main.lua` took `_` from
+  KOReader's `gettext`, which knows nothing of this plugin's strings, so the
+  menu label stayed English while the game's own screen, which goes through
+  `i18n`, was translated. `_` now comes from `i18n` here too.
+
+
 ## [1.1.15] - 2026-10-01
 
 ### Fixed
