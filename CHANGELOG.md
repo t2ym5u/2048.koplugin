@@ -6,6 +6,30 @@ Reconstructed from this repository's git history: each release lists the
 feature and fix commits it carried. Version bumps, screenshot additions
 and CI syncs are left out.
 
+## [1.2.0] - 2026-10-30
+
+### Changed
+- Redesigned play screen. The board fills the room the title bar and controls
+  leave, with one edge instead of the frame's second outline around its own
+  grey background, and the four small arrow buttons became a full-width action
+  bar.
+- The status line reads "4×4 · Score: … · Best: …" and wraps in landscape
+  instead of being cut off. The "Max" part is gone: the board already shows
+  the largest tile.
+- The size entry in the title-bar menu reads "Size: 4×4" instead of a bare
+  "4×4".
+- Once the board is stuck, the action bar shows New game and Undo in place of
+  the arrows, so the next round (or taking back the losing move) no longer
+  needs the menu.
+- The rules mention the arrow buttons as well as swiping.
+
+### Fixed
+- Tile numbers overflowed their tiles on high-DPI screens: their size was a
+  fixed fraction of the tile, which `Font:getFace()` then scaled again by DPI.
+  Each digit count now gets the largest size that fits, including a smaller
+  one for five-digit tiles (65536), and the "Game over" banner is fitted the
+  same way.
+
 ## [1.1.16] - 2026-10-07
 
 ### Fixed
