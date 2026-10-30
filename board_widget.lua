@@ -51,7 +51,28 @@ local Game2048BoardWidget = InputContainer:extend{
     board     = nil,
     onSwipe   = nil,   -- function(direction)
     cell_size = 0,
+    max_size  = nil,   -- side in pixels; defaults to 85% of the short screen side
 }
+
+-- Largest face whose ink for `sample` fits max_w x max_h. Measured unbounded
+-- (with max_w as the limit sizeUtf8Text truncates, so the width test could
+-- never fail), and ink height is y_top + y_bottom: both are positive
+-- distances from the baseline. Measuring keeps this DPI-independent, since
+-- Font:getFace() scales its size argument by DPI.
+local function fitFace(font, sample, max_w, max_h)
+    local screen_w = require("device").screen:getWidth()
+    local lo, hi, best = 6, math.max(6, math.floor(max_h)), 6
+    while lo <= hi do
+        local mid = math.floor((lo + hi) / 2)
+        local m   = RenderText:sizeUtf8Text(0, screen_w, Font:getFace(font, mid), sample, true, false)
+        if m.x <= max_w and (m.y_top + m.y_bottom) <= max_h then
+            best, lo = mid, mid + 1
+        else
+            hi = mid - 1
+        end
+    end
+    return Font:getFace(font, best)
+end
 
 function Game2048BoardWidget:init()
     local board = self.board
@@ -60,8 +81,7 @@ function Game2048BoardWidget:init()
     local sh    = require("device").screen:getHeight()
     local avail = math.min(sw, sh)
 
-    -- Use 85% of the shorter screen dimension for the board
-    local total = math.floor(avail * 0.85)
+    local total = self.max_size and math.floor(self.max_size) or math.floor(avail * 0.85)
     local gap   = math.max(2, math.floor(total * 0.02))
     local cell  = math.floor((total - (n + 1) * gap) / n)
     cell = math.max(cell, 20)
@@ -73,10 +93,13 @@ function Game2048BoardWidget:init()
 
     self.dimen = Geom:new{ w = board_px, h = board_px }
 
-    -- Font sizes relative to cell
-    self.face_large  = Font:getFace("infont",      math.max(8, math.floor(cell * 0.45)))
-    self.face_medium = Font:getFace("infont",      math.max(7, math.floor(cell * 0.35)))
-    self.face_small  = Font:getFace("infont",         math.max(6, math.floor(cell * 0.32)))
+    -- One face per digit count, each the largest that fits the tile with a
+    -- margin: 2-digit tiles at about half the tile height, longer values
+    -- shrinking until "65536" still fits the width.
+    self.face_large  = fitFace("infont", "88",    cell * 0.80, cell * 0.50)
+    self.face_medium = fitFace("infont", "888",   cell * 0.80, cell * 0.42)
+    self.face_small  = fitFace("infont", "8888",  cell * 0.82, cell * 0.36)
+    self.face_tiny   = fitFace("infont", "88888", cell * 0.86, cell * 0.30)
 
     self.paint_rect = nil
 
@@ -131,7 +154,8 @@ function Game2048BoardWidget:paintTo(bb, x, y)
                 local len  = #text
                 local face = len <= 2 and self.face_large
                           or len == 3 and self.face_medium
-                          or self.face_small
+                          or len == 4 and self.face_small
+                          or self.face_tiny
                 local m    = RenderText:sizeUtf8Text(0, cell, face, text, true, false)
                 local base = ty + math.floor((cell + m.y_top - m.y_bottom) / 2)
                 local lx   = tx + math.floor((cell - m.x) / 2)
@@ -153,7 +177,7 @@ function Game2048BoardWidget:paintTo(bb, x, y)
         bb:paintRect(ox,          oy,          bord, oh,   Blitbuffer.COLOR_BLACK)
         bb:paintRect(ox + ow - bord, oy,        bord, oh,   Blitbuffer.COLOR_BLACK)
         local go_text = "Game Over"
-        local go_face = Font:getFace("infont", math.max(12, math.floor(bp * 0.09)))
+        local go_face = fitFace("infont", go_text, ow * 0.9, oh * 0.5)
         local m  = RenderText:sizeUtf8Text(0, ow, go_face, go_text, true, false)
         local tx = ox + math.floor((ow - m.x) / 2)
         local ty = oy + math.floor((oh + m.y_top - m.y_bottom) / 2)

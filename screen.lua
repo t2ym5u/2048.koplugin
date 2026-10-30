@@ -7,12 +7,8 @@ local function lrequire(name)
     return package.loaded[key]
 end
 
-local Button          = require("ui/widget/button")
-local ButtonTable     = require("ui/widget/buttontable")
-local CenterContainer = require("ui/widget/container/centercontainer")
 local Device          = require("device")
 local FrameContainer  = require("ui/widget/container/framecontainer")
-local Geom            = require("ui/geometry")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan  = require("ui/widget/horizontalspan")
 local Size            = require("ui/size")
@@ -35,7 +31,7 @@ local DeviceScreen = Device.screen
 local GAME_RULES_EN = _([[
 2048 — Rules
 
-Slide all tiles in one direction at a time (up, down, left, right).
+Slide all tiles in one direction at a time (up, down, left, right): swipe on the board, or tap one of the arrow buttons.
 When two tiles with the same number collide, they merge into one tile with their combined value.
 After each move, a new tile (2 or 4) appears in a random empty cell.
 Goal: create a tile with the value 2048.
@@ -47,7 +43,7 @@ Score: the value of each newly merged tile is added to your score.
 local GAME_RULES_FR = [[
 2048 — Règles
 
-Faites glisser toutes les tuiles dans une direction. Deux tuiles portant le même chiffre fusionnent en une tuile de valeur double. Après chaque déplacement, une nouvelle tuile (2 ou 4) apparaît dans une case vide. Objectif : créer une tuile valant 2048. La partie se termine quand aucun mouvement n'est plus possible.
+Faites glisser toutes les tuiles dans une direction : balayez le plateau ou appuyez sur l'une des flèches. Deux tuiles portant le même chiffre fusionnent en une tuile de valeur double. Après chaque déplacement, une nouvelle tuile (2 ou 4) apparaît dans une case vide. Objectif : créer une tuile valant 2048. La partie se termine quand aucun mouvement n'est plus possible.
 
 Score : la valeur de chaque fusion est ajoutée à votre score.
 ]]
@@ -76,12 +72,7 @@ end
 -- ---------------------------------------------------------------------------
 
 function Game2048Screen:buildLayout()
-    local sw           = DeviceScreen:getWidth()
     local is_landscape = self:isLandscape()
-
-    local button_width = is_landscape
-        and math.max(math.floor(sw * 0.35), 100)
-        or  math.floor(sw * 0.9)
 
     -- Title bar with Options menu
     local title_bar = self:buildTitleBar(_("2048"), function()
@@ -93,82 +84,48 @@ function Game2048Screen:buildLayout()
         }
     end)
 
-    -- Board widget
-    self.board_widget = Game2048BoardWidget:new{
-        board   = self.board,
-        onSwipe = function(dir) self:onSlide(dir) end,
+    -- Arrow buttons (alternative to swipe), one row at the controls width.
+    self.status_text:setMaxWidth(self:getControlsWidth())
+    local controls = VerticalGroup:new{
+        align = "center",
+        self.status_text,
+        VerticalSpan:new{ width = Size.span.vertical_large },
+        self:buildActionBar({
+            { text = "\xE2\x86\x91", callback = function() self:onSlide("up") end },
+            { text = "\xE2\x86\x93", callback = function() self:onSlide("down") end },
+            { text = "\xE2\x86\x90", callback = function() self:onSlide("left") end },
+            { text = "\xE2\x86\x92", callback = function() self:onSlide("right") end },
+        }),
     }
 
+    -- The widget paints its own grey board behind the tiles, which already
+    -- reads as the board's edge: a bordered frame around it drew a second
+    -- outline, so the frame only adds the padding here.
+    local frame_pad = Size.padding.large
+    local budget_w, budget_h = self:getBoardBudget(title_bar, controls)
+    self.board_widget = Game2048BoardWidget:new{
+        board    = self.board,
+        max_size = math.min(budget_w, budget_h) - 2 * frame_pad,
+        onSwipe  = function(dir) self:onSlide(dir) end,
+    }
     local board_frame = FrameContainer:new{
-        padding = Size.padding.large,
-        margin  = Size.margin.default,
+        padding    = frame_pad,
+        margin     = 0,
+        bordersize = 0,
         self.board_widget,
     }
 
-    -- Status text (Score/Best/Max) is centred within a fixed-width container
-    -- matching the board. A plain VerticalGroup/HorizontalGroup caches its
-    -- children's size the first time it's measured (here, before the real
-    -- text is set) and never re-centres them afterwards, so wrapping in a
-    -- CenterContainer with a fixed dimen is what keeps it centred as the
-    -- score text keeps changing width.
-    local status_container = CenterContainer:new{
-        dimen = Geom:new{ w = board_frame:getSize().w, h = self.status_text:getSize().h },
-        self.status_text,
-    }
-
-    -- Arrow buttons (alternative to swipe)
-    local arrow_btn_size = DeviceScreen:scaleBySize(52)
-    local arrow_gap      = DeviceScreen:scaleBySize(8)
-    local function makeArrowBtn(text, dir)
-        return Button:new{
-            text       = text,
-            width      = arrow_btn_size,
-            height     = arrow_btn_size,
-            font_size  = 26,
-            bordersize = Size.border.default,
-            radius     = Size.radius.button,
-            callback   = function() self:onSlide(dir) end,
-        }
-    end
-    local arrow_buttons = HorizontalGroup:new{
-        align = "center",
-        makeArrowBtn("\xE2\x86\x91", "up"),
-        HorizontalSpan:new{ width = arrow_gap },
-        makeArrowBtn("\xE2\x86\x93", "down"),
-        HorizontalSpan:new{ width = arrow_gap },
-        makeArrowBtn("\xE2\x86\x90", "left"),
-        HorizontalSpan:new{ width = arrow_gap },
-        makeArrowBtn("\xE2\x86\x92", "right"),
-    }
-
     if is_landscape then
-        local right_panel = VerticalGroup:new{
-            align = "center",
-            status_container,
-            VerticalSpan:new{ width = Size.span.vertical_large },
-            arrow_buttons,
-        }
         local content = HorizontalGroup:new{
-            align  = "center",
+            align = "center",
             board_frame,
-            HorizontalSpan:new{ width = Size.span.horizontal_default },
-            right_panel,
+            HorizontalSpan:new{ width = self:getGutter() },
+            controls,
         }
         self:buildLandscapeLayout(title_bar, content)
     else
-        -- Keep the board, score and arrows together as a single block so the
-        -- whole group floats centred in the available space, instead of
-        -- pinning the arrows to the very bottom of the screen with a large
-        -- gap below the score.
-        local content = VerticalGroup:new{
-            align = "center",
-            board_frame,
-            VerticalSpan:new{ width = Size.span.vertical_large },
-            status_container,
-            VerticalSpan:new{ width = Size.span.vertical_large },
-            arrow_buttons,
-        }
-        self:buildPortraitLayout(title_bar, content, nil)
+        self:buildPortraitLayout(title_bar, board_frame,
+            VerticalGroup:new{ align = "center", controls, VerticalSpan:new{ width = self:getGutter() } })
     end
     self:updateStatus()
 end
@@ -190,6 +147,7 @@ function Game2048Screen:onSlide(direction)
     else
         self:updateStatus()
     end
+    self:refreshActionBar()
     self.plugin:saveState(self.board:serialize())
 end
 
@@ -199,6 +157,7 @@ function Game2048Screen:onUndo()
         self:_updateUndoButton()
         self.board_widget:refresh()
         self:updateStatus()
+        self:refreshActionBar()
         self.plugin:saveState(self.board:serialize())
     else
         self:updateStatus(_("Nothing to undo."))
@@ -212,6 +171,19 @@ function Game2048Screen:onNewGame()
     self.plugin:saveState(self.board:serialize())
     self:buildLayout()
     UIManager:setDirty(self, function() return "ui", self.dimen end)
+end
+
+-- Reaching 2048 doesn't end the round (play goes on): only a stuck board does.
+function Game2048Screen:isRoundOver()
+    return self.board.game_over
+end
+
+-- Undoing the move that filled the board is a real way out of a loss.
+function Game2048Screen:getRoundOverButtons()
+    return {
+        { text = _("New game"), callback = function() self:onNewGame() end },
+        { text = _("Undo"),     callback = function() self:onUndo() end },
+    }
 end
 
 function Game2048Screen:onCycleSize()
@@ -245,12 +217,16 @@ function Game2048Screen:updateStatus(msg)
             self.plugin:saveSetting("best_score", self.board.score)
             best = self.board.score
         end
-        local max_tile = self.board:getMaxTile()
+        local n = self.board.n
         if self.board.game_over then
-            status = T(_("Game over \xC2\xB7 Score: %1 \xC2\xB7 Best: %2"), self.board.score, best)
+            status = self:joinStatus(_("Game over"),
+                T(_("Score: %1"), self.board.score),
+                T(_("Best: %1"), best))
         else
-            status = T(_("Score: %1 \xC2\xB7 Best: %2 \xC2\xB7 Max: %3"),
-                self.board.score, best, max_tile)
+            -- No "Max" tile part: the board already shows it.
+            status = self:joinStatus(T("%1\xC3\x97%2", n, n),
+                T(_("Score: %1"), self.board.score),
+                T(_("Best: %1"), best))
         end
     end
     ScreenBase.updateStatus(self, status)
@@ -262,7 +238,7 @@ end
 
 function Game2048Screen:getSizeButtonText()
     local n = self.plugin:getSetting("grid_n", 4)
-    return T(_("%1\xC3\x97%2"), n, n)
+    return T(_("Size: %1"), T("%1\xC3\x97%2", n, n))
 end
 
 function Game2048Screen:_updateUndoButton()
