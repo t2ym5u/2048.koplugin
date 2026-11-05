@@ -2,6 +2,12 @@
 
 local DEFAULT_N = 4
 
+-- Tile that wins the round. 2048 cannot be reached on 3×3: merging two
+-- 1024s needs 1024, 512, ..., 8, 4 and a second 4 on the board at once,
+-- ten tiles on nine cells. 512 keeps 3×3 winnable and still a challenge.
+local WIN_TILE = { [3] = 512 }
+local DEFAULT_WIN_TILE = 2048
+
 -- ---------------------------------------------------------------------------
 -- Slide helpers
 -- ---------------------------------------------------------------------------
@@ -183,11 +189,12 @@ function Game2048Board:slide(direction)
 
     self.score = self.score + score_gain
 
-    -- Check win (2048 tile)
+    -- Check win (2048 tile, 512 on 3×3)
     if not self.win_shown then
+        local target = self:getWinTile()
         for r = 1, n do
             for c = 1, n do
-                if self.grid[r][c] >= 2048 then
+                if self.grid[r][c] >= target then
                     self.win      = true
                     self.win_shown = true
                 end
@@ -229,6 +236,10 @@ function Game2048Board:undo()
     self.prev_score = nil
     self.game_over  = false
     return true
+end
+
+function Game2048Board:getWinTile()
+    return WIN_TILE[self.n] or DEFAULT_WIN_TILE
 end
 
 function Game2048Board:getMaxTile()

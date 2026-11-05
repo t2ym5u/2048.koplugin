@@ -6,6 +6,13 @@ Reconstructed from this repository's git history: each release lists the
 feature and fix commits it carried. Version bumps, screenshot additions
 and CI syncs are left out.
 
+## [1.3.0] - 2026-11-05
+
+### Fixed
+- The 3×3 board can be won: it now wins at 512. A 2048 tile cannot be built
+  on nine cells (merging two 1024s needs ten tiles on the board at once),
+  so 3×3 games could only ever end in a loss. The rules say so too.
+
 ## [1.2.5] - 2026-11-04
 
 ### Fixed
