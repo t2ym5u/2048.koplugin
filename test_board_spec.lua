@@ -154,6 +154,29 @@ describe("Game2048Board", function()
             assert.is_true(b.win)
         end)
 
+        -- 2048 is out of reach on nine cells, so 3×3 wins at 512.
+        it("wins at 512 on 3×3", function()
+            local b = makeBoard({
+                {256, 256, 0},
+                {0,   0,   0},
+                {0,   0,   0},
+            })
+            assert.are.equal(512, b:getWinTile())
+            b:slide("left")
+            assert.is_true(b.win)
+        end)
+
+        it("does not win at 512 on 4×4", function()
+            local b = makeBoard({
+                {256, 256, 0, 0},
+                {0,   0,   0, 0},
+                {0,   0,   0, 0},
+                {0,   0,   0, 0},
+            })
+            b:slide("left")
+            assert.is_false(b.win)
+        end)
+
         it("_hasMoves returns false when the board is fully stuck", function()
             local b = makeBoard({
                 {2, 4, 2, 4},

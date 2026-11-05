@@ -34,7 +34,7 @@ local GAME_RULES_EN = _([[
 Slide all tiles in one direction at a time (up, down, left, right): swipe on the board, or tap one of the arrow buttons.
 When two tiles with the same number collide, they merge into one tile with their combined value.
 After each move, a new tile (2 or 4) appears in a random empty cell.
-Goal: create a tile with the value 2048.
+Goal: create a tile with the value 2048 (512 on the 3×3 board, where 2048 cannot be reached).
 The game ends when no more moves are possible.
 
 Score: the value of each newly merged tile is added to your score.
@@ -43,7 +43,7 @@ Score: the value of each newly merged tile is added to your score.
 local GAME_RULES_FR = [[
 2048 — Règles
 
-Faites glisser toutes les tuiles dans une direction : balayez le plateau ou appuyez sur l'une des flèches. Deux tuiles portant le même chiffre fusionnent en une tuile de valeur double. Après chaque déplacement, une nouvelle tuile (2 ou 4) apparaît dans une case vide. Objectif : créer une tuile valant 2048. La partie se termine quand aucun mouvement n'est plus possible.
+Faites glisser toutes les tuiles dans une direction : balayez le plateau ou appuyez sur l'une des flèches. Deux tuiles portant le même chiffre fusionnent en une tuile de valeur double. Après chaque déplacement, une nouvelle tuile (2 ou 4) apparaît dans une case vide. Objectif : créer une tuile valant 2048 (512 sur le plateau 3×3, où 2048 est impossible à atteindre). La partie se termine quand aucun mouvement n'est plus possible.
 
 Score : la valeur de chaque fusion est ajoutée à votre score.
 ]]
@@ -141,7 +141,7 @@ function Game2048Screen:onSlide(direction)
     self.board_widget:refresh()
     if self.board.win and not self._win_announced then
         self._win_announced = true
-        self:updateStatus(_("You reached 2048! Keep going!"))
+        self:updateStatus(T(_("You reached %1! Keep going!"), self.board:getWinTile()))
     elseif self.board.game_over then
         self:updateStatus(_("No moves left. Game over!"))
     else
