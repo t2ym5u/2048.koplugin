@@ -6,6 +6,12 @@ Reconstructed from this repository's git history: each release lists the
 feature and fix commits it carried. Version bumps, screenshot additions
 and CI syncs are left out.
 
+## [1.3.4] - 2026-11-24
+
+### Changed
+- Picks up game-common 1.19.0: with the Dashboard installed, the title bar's
+  close icon becomes a house that goes back to it.
+
 ## [1.3.3] - 2026-11-24
 
 ### Changed
