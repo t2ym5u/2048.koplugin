@@ -6,6 +6,14 @@ Reconstructed from this repository's git history: each release lists the
 feature and fix commits it carried. Version bumps, screenshot additions
 and CI syncs are left out.
 
+## [1.3.5] - 2026-11-24
+
+### Changed
+- Picks up game-common 1.20.0: a deferred action no longer runs once the
+  game is closed or a new game has started, and the game is saved a few
+  seconds after a move instead of after every one, and at once on close,
+  suspend or power-off.
+
 ## [1.3.4] - 2026-11-24
 
 ### Changed
