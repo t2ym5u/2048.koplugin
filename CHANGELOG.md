@@ -6,6 +6,12 @@ Reconstructed from this repository's git history: each release lists the
 feature and fix commits it carried. Version bumps, screenshot additions
 and CI syncs are left out.
 
+## [1.3.3] - 2026-11-24
+
+### Changed
+- Picks up game-common 1.18.0: a status line cut off with "…" opens in full
+  when tapped, so a long hint can be read.
+
 ## [1.3.2] - 2026-11-18
 
 ### Changed
